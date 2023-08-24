@@ -1,2 +1,3 @@
 .ipynb_checkpoints/*
-__pycache__/*
+set_env.sh
+*__pycache__/*

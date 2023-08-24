@@ -9,4 +9,4 @@ torchrun --nproc_per_node=4 train-resnet-lps.py --data-path $IMAGENET_PATH --mod
 --auto-augment ta_wide --epochs 600 --random-erase 0.1 --weight-decay 0.00002 \
 --norm-weight-decay 0.0 --label-smoothing 0.1 --mixup-alpha 0.2 --cutmix-alpha 1.0 \
 --train-crop-size 176 --model-ema --val-resize-size 232 \
---ra-sampler --ra-reps=4 --output-dir="checkpoints" --resume
+--ra-sampler --ra-reps=4 --output-dir="checkpoints" --workers=8 --resume
