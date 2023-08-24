@@ -1,3 +1,5 @@
 .ipynb_checkpoints/*
 set_env.sh
 *__pycache__/*
+learn_poly_sampling/models/.ipynb_checkpoints/*
+learn_poly_sampling/models/__pycache__/
