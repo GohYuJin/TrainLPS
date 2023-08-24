@@ -1,7 +1,7 @@
-"# OptimalQT" 
+# TrainLPS 
 
-## Split data into High Quality and Low Quality:
-python split_imagenet_by_quality.py \<imagenet path\>
+Code in the learn_poly_sampling module was extracted from https://github.com/raymondyeh07/learnable_polyphase_sampling
+Training script was adapted from torchvision training recipes https://github.com/pytorch/vision/tree/main/references/classification
     
 ## code to launch training for imagenet as per torchvision's recipe
 torchrun --nproc_per_node=4 train-resnet-lps.py --data-path $IMAGENET_PATH --model resnet50-lps --batch-size 128 --lr 0.5 \
