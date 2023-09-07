@@ -2,6 +2,7 @@ from .basic import BasicClassifier
 from .resnet_custom import ResNet18Custom,ResNet50Custom,ResNet101Custom
 from .resnetlite1_custom import ResNetLite50Type1Custom
 from .resnetlite2_custom import ResNetLite50Type2Custom
+from .resnetlite3_custom import ResNetLite50Type3Custom
 from torch import optim
 from torch.optim import lr_scheduler
 from . import paramscheduler
@@ -16,6 +17,7 @@ _available_classifiers = {
     'ResNet101Custom': ResNet101Custom,
     'ResNetLite50Type1Custom': ResNetLite50Type1Custom,
     'ResNetLite50Type2Custom': ResNetLite50Type2Custom,
+    'ResNetLite50Type3Custom': ResNetLite50Type3Custom,
     }
 
 _available_optimizers = {
