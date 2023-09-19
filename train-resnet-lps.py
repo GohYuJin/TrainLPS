@@ -14,6 +14,7 @@ from torch import nn
 from torch.utils.data.dataloader import default_collate
 from torchvision.transforms.functional import InterpolationMode
 from transforms import get_mixup_cutmix
+from ResnetHalfChannels import get_halved_model
 
 
 def train_one_epoch(model, criterion, optimizer, data_loader, device, epoch, args, model_ema=None, scaler=None):
@@ -283,6 +284,8 @@ def main(args):
         pool_layer = get_pool_method(FLAGS.pool_method, FLAGS)
         model_arch_str = [i for i in get_available_models() if i.lower().startswith(args.model.split("-")[0])][0]
         model = get_model(model_arch_str)(224, 1000, extras_model = extras_model, pooling_layer=pool_layer)
+    elif args.model.endswith("halved"):
+        model = get_halved_model(args.model)
     else:
         model = torchvision.models.get_model(args.model, weights=args.weights, num_classes=num_classes)
     model.to(device)
