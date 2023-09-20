@@ -448,13 +448,13 @@ def resnet152halved(*, weights: Optional[ResNet152_Weights] = None, progress: bo
     return _resnet(Bottleneck, [3, 8, 36, 3], weights, progress, **kwargs)
 
 
-def get_halved_model(model_name):
+def get_halved_model(model_name, *args, **kwargs):
     models = {
-        "resnet18halved": resnet18halved,
-        "resnet34halved": resnet34halved,
-        "resnet50halved": resnet50halved,
-        "resnet101halved": resnet101halved,
-        "resnet152halved": resnet152halved,
+        "resnet18halved": resnet18halved(*args, **kwargs),
+        "resnet34halved": resnet34halved(*args, **kwargs),
+        "resnet50halved": resnet50halved(*args, **kwargs),
+        "resnet101halved": resnet101halved(*args, **kwargs),
+        "resnet152halved": resnet152halved(*args, **kwargs),
     }
     return models[model_name]
 
