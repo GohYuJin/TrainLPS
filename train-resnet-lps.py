@@ -284,6 +284,9 @@ def main(args):
         pool_layer = get_pool_method(FLAGS.pool_method, FLAGS)
         model_arch_str = [i for i in get_available_models() if i.lower().startswith(args.model.split("-")[0])][0]
         model = get_model(model_arch_str)(224, 1000, extras_model = extras_model, pooling_layer=pool_layer)
+    elif args.model.endswith("-aps"):
+        from APS.aps_models import resnet50
+        model = resnet50()
     elif args.model.endswith("halved"):
         model = get_halved_model(args.model)
     else:
