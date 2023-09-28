@@ -14,6 +14,7 @@ from torch import nn
 from torch.utils.data.dataloader import default_collate
 from torchvision.transforms.functional import InterpolationMode
 from transforms import get_mixup_cutmix
+from CustomImageNetDataset import CustomImageNet
 
 
 def train_one_epoch(model, criterion, optimizer, data_loader, device, epoch, args, model_ema=None, scaler=None):
@@ -111,7 +112,7 @@ def _get_cache_path(filepath):
     return cache_path
 
 
-def load_data(traindir, valdir, args):
+def load_data(traindir, valdir, train_csv, val_csv, cls_json, args):
     # Data loading code
     print("Loading data")
     val_resize_size, val_crop_size, train_crop_size = (
@@ -135,19 +136,36 @@ def load_data(traindir, valdir, args):
         random_erase_prob = getattr(args, "random_erase", 0.0)
         ra_magnitude = getattr(args, "ra_magnitude", None)
         augmix_severity = getattr(args, "augmix_severity", None)
-        dataset = torchvision.datasets.ImageFolder(
-            traindir,
-            presets.ClassificationPresetTrain(
-                crop_size=train_crop_size,
-                interpolation=interpolation,
-                auto_augment_policy=auto_augment_policy,
-                random_erase_prob=random_erase_prob,
-                ra_magnitude=ra_magnitude,
-                augmix_severity=augmix_severity,
-                backend=args.backend,
-                use_v2=args.use_v2,
-            ),
-        )
+        if train_csv is not None:
+            dataset = CustomImageNet(
+                traindir,
+                train_csv,
+                cls_json,
+                transforms=presets.ClassificationPresetTrain(
+                    crop_size=train_crop_size,
+                    interpolation=interpolation,
+                    auto_augment_policy=auto_augment_policy,
+                    random_erase_prob=random_erase_prob,
+                    ra_magnitude=ra_magnitude,
+                    augmix_severity=augmix_severity,
+                    backend=args.backend,
+                    use_v2=args.use_v2,
+                ),
+            )
+        else:
+            dataset = torchvision.datasets.ImageFolder(
+                traindir,
+                presets.ClassificationPresetTrain(
+                    crop_size=train_crop_size,
+                    interpolation=interpolation,
+                    auto_augment_policy=auto_augment_policy,
+                    random_erase_prob=random_erase_prob,
+                    ra_magnitude=ra_magnitude,
+                    augmix_severity=augmix_severity,
+                    backend=args.backend,
+                    use_v2=args.use_v2,
+                ),
+            )
         if args.cache_dataset:
             print(f"Saving dataset_train to {cache_path}")
             utils.mkdir(os.path.dirname(cache_path))
@@ -175,11 +193,19 @@ def load_data(traindir, valdir, args):
                 backend=args.backend,
                 use_v2=args.use_v2,
             )
-
-        dataset_test = torchvision.datasets.ImageFolder(
-            valdir,
-            preprocessing,
-        )
+        
+        if val_csv is not None:
+            dataset_test = CustomImageNet(
+                valdir,
+                val_csv,
+                cls_json,
+                transforms=preprocessing,
+            )
+        else:
+            dataset_test = torchvision.datasets.ImageFolder(
+                valdir,
+                preprocessing,
+            )
         if args.cache_dataset:
             print(f"Saving dataset_test to {cache_path}")
             utils.mkdir(os.path.dirname(cache_path))
@@ -216,7 +242,10 @@ def main(args):
 
     train_dir = os.path.join(args.data_path, "train")
     val_dir = os.path.join(args.data_path, "val")
-    dataset, dataset_test, train_sampler, test_sampler = load_data(train_dir, val_dir, args)
+    train_csv = args.train_csv
+    val_csv = args.val_csv
+    cls_json = args.cls_json
+    dataset, dataset_test, train_sampler, test_sampler = load_data(train_dir, val_dir, train_csv, val_csv, cls_json, args)
 
     num_classes = len(dataset.classes)
     mixup_cutmix = get_mixup_cutmix(
@@ -394,6 +423,9 @@ def get_args_parser(add_help=True):
     parser = argparse.ArgumentParser(description="PyTorch Classification Training", add_help=add_help)
 
     parser.add_argument("--data-path", default="/datasets01/imagenet_full_size/061417/", type=str, help="dataset path")
+    parser.add_argument("--train-csv", default=None, type=str, help="If specified, will only use training images specified by csv file")
+    parser.add_argument("--val-csv", default=None, type=str, help="If specified, will only use validation images specified by csv file")
+    parser.add_argument("--cls-json", default="class_lists/imagenet_class_index.json", type=str, help="Imagenet class json mapping file")
     parser.add_argument("--model", default="resnet18", type=str, help="model name")
     parser.add_argument("--device", default="cuda", type=str, help="device (Use cuda or cpu Default: cuda)")
     parser.add_argument(
