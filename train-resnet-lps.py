@@ -18,6 +18,8 @@ from ResnetHalfChannels import get_halved_model
 from CustomImageNetDataset import CustomImageNet
 
 
+torch.multiprocessing.set_sharing_strategy('file_descriptor')
+
 def train_one_epoch(model, criterion, optimizer, data_loader, device, epoch, args, model_ema=None, scaler=None):
     model.train()
     metric_logger = utils.MetricLogger(delimiter="  ")
