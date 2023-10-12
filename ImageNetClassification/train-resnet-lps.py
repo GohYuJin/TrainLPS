@@ -14,6 +14,8 @@ from torch import nn
 from torch.utils.data.dataloader import default_collate
 from torchvision.transforms.functional import InterpolationMode
 from transforms import get_mixup_cutmix
+import sys
+sys.path.append("..")
 from ResnetHalfChannels import get_halved_model
 from CustomImageNetDataset import CustomImageNet
 
@@ -277,7 +279,7 @@ def main(args):
     print("Creating model")
     if args.model.endswith("-lps"):
         import sys
-        sys.path.append("./learn_poly_sampling/")
+        sys.path.append("../learn_poly_sampling/")
         from models import get_model, get_available_models
         from layers import get_pool_method
         
