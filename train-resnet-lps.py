@@ -302,7 +302,7 @@ def main(args):
                 self.LPS_debug = False
                 self.LPS_convex = False
                 self.pool_k = 2
-                self.antialias_mode = 'LowPassFilter'
+                self.antialias_mode = 'DDAC'
                 self.antialias_size = 3
                 self.antialias_padding = 'same'
                 self.antialias_padding_mode = "circular"
