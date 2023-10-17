@@ -11,3 +11,6 @@ learn_poly_sampling/models/thirdparty/utils/*
 *.ipynb
 run.sh
 set_envs.sh
+APS/aps_models/.ipynb_checkpoints/*
+learn_poly_sampling/models/*.ipynb
+CocoDetection/imagenet_weights/*

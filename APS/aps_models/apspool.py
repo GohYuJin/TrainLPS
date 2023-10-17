@@ -35,7 +35,7 @@ class ApsPool(nn.Module):
         self.pad = get_pad_layer(pad_type)(self.pad_sizes)
         
         if self.N is not None:
-            self.permute_indices = permute_polyphase(N, stride = 2).cuda()
+            self.permute_indices = permute_polyphase(N, stride = 2)
             
         else:
             self.permute_indices = None
@@ -61,7 +61,6 @@ class ApsPool(nn.Module):
         
 
 def aps_downsample_v2(x, stride, polyphase_indices = None, return_poly_indices = True, permute_indices = None, apspool_criterion = 'l2'):
-    
     if stride==1:
         return x
     
@@ -75,17 +74,19 @@ def aps_downsample_v2(x, stride, polyphase_indices = None, return_poly_indices =
         Nb2 = int(N/2)
         
         if permute_indices is None:
-            permute_indices = permute_polyphase(N).long().to(x.device)
-
-        x = x.view(B, C, -1)
-        x = torch.index_select(x, dim=2, index = permute_indices).view(B, C, 4, N_poly).permute(0, 2, 1, 3)
+            permute_indices = permute_polyphase(N, device=x.device).long()
+            
+        xpoly_0 = x[:, :, ::stride, ::stride]
+        xpoly_1 = x[:, :, 1::stride, ::stride]
+        xpoly_2 = x[:, :, ::stride, 1::stride]
+        xpoly_3 = x[:, :, 1::stride, 1::stride]
+        xpoly_combined = torch.stack([xpoly_0, xpoly_1, xpoly_2, xpoly_3], dim=1)
         
         if polyphase_indices is None:
+            polyphase_indices = get_polyphase_indices_v2(xpoly_combined, apspool_criterion)
             
-            polyphase_indices = get_polyphase_indices_v2(x, apspool_criterion)
-            
-        batch_indices = torch.arange(B).to(x.device)
-        output = x[batch_indices, polyphase_indices, :, :].view(B, C, Nb2, Nb2)
+        batch_indices = torch.arange(B, device=x.device)
+        output = xpoly_combined[batch_indices, polyphase_indices, :, :, :]
         
         if return_poly_indices:
             return output, polyphase_indices
@@ -98,11 +99,11 @@ def get_polyphase_indices_v2(x, apspool_criterion):
 #     x has the form (B, 4, C, N_poly) where N_poly corresponds to the reduced version of the 2d feature maps
 
     if apspool_criterion == 'l2':
-        norms = torch.norm(x, dim = (2, 3), p = 2)
+        norms = torch.norm(x, dim = (2, 3, 4), p = 2)
         polyphase_indices = torch.argmax(norms, dim = 1)
         
     elif apspool_criterion == 'l1':
-        norms = torch.norm(x, dim = (2, 3), p = 1)
+        norms = torch.norm(x, dim = (2, 3, 4), p = 1)
         polyphase_indices = torch.argmax(norms, dim = 1)
         
     elif apspool_criterion == 'l_infty':
@@ -118,11 +119,11 @@ def get_polyphase_indices_v2(x, apspool_criterion):
         
         
     elif apspool_criterion == 'l2_min':
-        norms = torch.norm(x, dim = (2, 3), p = 2)
+        norms = torch.norm(x, dim = (2, 3, 4), p = 2)
         polyphase_indices = torch.argmin(norms, dim = 1)
         
     elif apspool_criterion == 'l1_min':
-        norms = torch.norm(x, dim = (2, 3), p = 1)
+        norms = torch.norm(x, dim = (2, 3, 4), p = 1)
         polyphase_indices = torch.argmin(norms, dim = 1)
         
     else:
@@ -170,13 +171,13 @@ def aps_pad(x):
         
     
     
-def permute_polyphase(N, stride = 2):
+def permute_polyphase(N, stride = 2, device='cpu'):
     
-    base_even_ind = 2*torch.arange(int(N/2))[None, :]
-    base_odd_ind = 1 + 2*torch.arange(int(N/2))[None, :]
+    base_even_ind = 2*torch.arange(int(N/2), device=device)[None, :]
+    base_odd_ind = 1 + 2*torch.arange(int(N/2), device=device)[None, :]
     
-    even_increment = 2*N*torch.arange(int(N/2))[:,None]
-    odd_increment = N + 2*N*torch.arange(int(N/2))[:,None]
+    even_increment = 2*N*torch.arange(int(N/2), device=device)[:,None]
+    odd_increment = N + 2*N*torch.arange(int(N/2), device=device)[:,None]
     
     p0_indices = (base_even_ind + even_increment).view(-1)
     p1_indices = (base_even_ind + odd_increment).view(-1)
