@@ -35,6 +35,8 @@ from torchvision.transforms import InterpolationMode
 from transforms import SimpleCopyPaste
 from torchvision.models.detection.backbone_utils import _resnet_fpn_extractor
 from torchvision.models.detection.faster_rcnn import FasterRCNN
+import sys
+sys.path.append("..")
 
 def copypaste_collate_fn(batch):
     copypaste = SimpleCopyPaste(blending=True, resize_interpolation=InterpolationMode.BILINEAR)
@@ -246,7 +248,9 @@ def main(args):
     if "-aps" in args.model:
         from APS.aps_models import resnet50
         backbone = resnet50()
-        backbone = _resnet_fpn_extractor(backbone.core, 3)
+        checkpoint = torch.load(args.weights_backbone)
+        backbone.load_state_dict(checkpoint['model'])
+        backbone = _resnet_fpn_extractor(backbone, 3)
         model = FasterRCNN(backbone, num_classes=num_classes)
     elif "-lps" in args.model:
         import sys
@@ -286,8 +290,10 @@ def main(args):
 
         FLAGS = flag_struct() # quick fix to handle absl flags
         pool_layer = get_pool_method(FLAGS.pool_method, FLAGS)
-        model_arch_str = [i for i in get_available_models() if i.lower().startswith(args.model.split("-")[0])][0]
+        model_arch_str = 'ResNet50Custom'
         backbone = get_model(model_arch_str)(224, 1000, extras_model = extras_model, pooling_layer=pool_layer)
+        checkpoint = torch.load(args.weights_backbone)
+        backbone.load_state_dict(checkpoint['model'])
         backbone = _resnet_fpn_extractor(backbone.core, 3)
         model = FasterRCNN(backbone, num_classes=num_classes)
     else:
