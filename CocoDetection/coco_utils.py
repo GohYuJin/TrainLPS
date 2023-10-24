@@ -197,18 +197,14 @@ class CocoDetection(torchvision.datasets.CocoDetection):
         return img, target
 
 
-def get_coco(root, image_set, transforms, mode="instances", use_v2=False, with_masks=False):
-    anno_file_template = "{}_{}2017.json"
-    PATHS = {
-        "train": ("train2017", os.path.join("annotations", anno_file_template.format(mode, "train"))),
-        "val": ("val2017", os.path.join("annotations", anno_file_template.format(mode, "val"))),
-        # "train": ("val2017", os.path.join("annotations", anno_file_template.format(mode, "val")))
-    }
-
-    img_folder, ann_file = PATHS[image_set]
-    img_folder = os.path.join(root, img_folder)
-    ann_file = os.path.join(root, ann_file)
-
+def get_coco(root, image_set, transforms, ann_file=None, mode="instances", use_v2=False, with_masks=False):
+    img_folder_template = "{}2017"
+    img_folder = os.path.join(root, img_folder_template.format(image_set))
+    
+    if ann_file is None:
+        anno_file_template = "{}_{}2017.json"
+        ann_file = os.path.join(root, os.path.join("annotations", anno_file_template.format(mode, image_set)))
+    
     if use_v2:
         from torchvision.datasets import wrap_dataset_for_transforms_v2
 

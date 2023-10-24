@@ -49,6 +49,7 @@ def get_dataset(is_train, args):
     with_masks = "mask" in args.model
     ds = get_coco(
         root=args.data_path,
+        ann_file=args.ann_file,
         image_set=image_set,
         transforms=get_transform(is_train, args),
         mode=mode,
@@ -77,6 +78,7 @@ def get_args_parser(add_help=True):
     parser = argparse.ArgumentParser(description="PyTorch Detection Training", add_help=add_help)
 
     parser.add_argument("--data-path", default="/datasets01/COCO/022719/", type=str, help="dataset path")
+    parser.add_argument("--ann-file", default=None, type=str, help="for custom annotation file path to include and exclude images")
     parser.add_argument(
         "--dataset",
         default="coco",
@@ -248,8 +250,9 @@ def main(args):
     if "-aps" in args.model:
         from APS.aps_models import resnet50
         backbone = resnet50()
-        checkpoint = torch.load(args.weights_backbone)
-        backbone.load_state_dict(checkpoint['model'])
+        if args.weights_backbone:
+            checkpoint = torch.load(args.weights_backbone)
+            backbone.load_state_dict(checkpoint['model'])
         backbone = _resnet_fpn_extractor(backbone, 3)
         model = FasterRCNN(backbone, num_classes=num_classes)
     elif "-lps" in args.model:
@@ -292,8 +295,9 @@ def main(args):
         pool_layer = get_pool_method(FLAGS.pool_method, FLAGS)
         model_arch_str = 'ResNet50Custom'
         backbone = get_model(model_arch_str)(224, 1000, extras_model = extras_model, pooling_layer=pool_layer)
-        checkpoint = torch.load(args.weights_backbone)
-        backbone.load_state_dict(checkpoint['model'])
+        if args.weights_backbone:
+            checkpoint = torch.load(args.weights_backbone)
+            backbone.load_state_dict(checkpoint['model'])
         backbone = _resnet_fpn_extractor(backbone.core, 3)
         model = FasterRCNN(backbone, num_classes=num_classes)
     else:
@@ -335,6 +339,8 @@ def main(args):
     args.lr_scheduler = args.lr_scheduler.lower()
     if args.lr_scheduler == "multisteplr":
         lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.lr_steps, gamma=args.lr_gamma)
+    elif args.lr_scheduler == "onecyclelr":
+        lr_scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=args.lr*5, epochs=args.epochs, steps_per_epoch=len(data_loader))
     elif args.lr_scheduler == "cosineannealinglr":
         lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)
     else:
